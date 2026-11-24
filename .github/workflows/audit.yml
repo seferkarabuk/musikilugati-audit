@@ -31,7 +31,7 @@ jobs:
       - name: Run Lighthouse
         run: |
           mkdir -p reports
-          CHROME_PATH="$(command -v google-chrome)" lighthouse https://musikilugati.com \
+          CHROME_PATH="$(command -v google-chrome)" npx --no-install lighthouse https://musikilugati.com \
             --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
             --output=json \
             --output-path=reports/lighthouse.json \
