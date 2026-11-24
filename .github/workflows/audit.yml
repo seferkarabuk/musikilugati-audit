@@ -1,0 +1,55 @@
+name: Weekly comprehensive audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Run Lighthouse
+        run: |
+          mkdir -p reports
+          CHROME_PATH="$(command -v google-chrome)" lighthouse https://musikilugati.com \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --output=json \
+            --output-path=reports/lighthouse.json \
+            --only-categories=performance,seo,accessibility,best-practices \
+            --quiet
+
+      - name: Run crawl and security checks
+        env:
+          SITE_URL: https://musikilugati.com
+        run: npm run audit
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-${{ github.run_number }}
+          path: |
+            reports/
+            AUDIT_SUMMARY.md
+          if-no-files-found: warn
+          retention-days: 90
